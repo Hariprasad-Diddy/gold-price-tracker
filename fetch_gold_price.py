@@ -97,6 +97,7 @@ if records:
     print(f"DEBUG: File successfully written to {os.path.abspath(csv_path)}")
 else:
     print(response.text)
+    print(response.text.find("GOLD 22 KT/1g"))
     print("DEBUG: No records were found. Check your Regex patterns!")
     exit(1)
 
