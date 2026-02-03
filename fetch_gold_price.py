@@ -87,16 +87,16 @@ unique_gold = dict(gold_matches)
 for purity, amount in unique_gold.items():
     records.append({"date": date_str, "time": time_str, "article": f"GOLD {purity} 1G", "price": amount})
 
-# SAVE TO CSV (Modified for GitHub Actions)
 if records:
     df = pd.DataFrame(records)
-    csv_path = "response.csv"  # Save directly in the root folder
+    csv_path = "response.csv" 
     
-    # Append to CSV
+    # Use absolute path relative to the workspace for GitHub
     add_header = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
     df.to_csv(csv_path, mode='a', header=add_header, index=False)
-    print(f"Success: Saved to {csv_path}")
+    print(f"DEBUG: File successfully written to {os.path.abspath(csv_path)}")
 else:
-    print("No data found to save.")
+    print("DEBUG: No records were found. Check your Regex patterns!")
+    exit(1)
 
 
