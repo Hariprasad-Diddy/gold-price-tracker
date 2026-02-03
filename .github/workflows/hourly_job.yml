@@ -18,19 +18,28 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: pip install requests pandas  # <--- Added pandas here
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pandas lxml html5lib  # Added extra scraping support
 
       - name: Run script
         run: python fetch_gold_price.py
+
+      - name: Debug - List Files
+        run: ls -R  # This will show us in the logs if the file exists
 
       - name: Commit and push changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          if [ -f response.csv ]; then
-            git add response.csv
-            git diff --quiet && git diff --staged --quiet || (git commit -m "Update prices" && git push)
+          
+          # Use 'git add .' to be safer
+          git add . 
+          
+          # Only commit if there are actual changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
           else
-            echo "File not found"
-            exit 1
+            git commit -m "Update prices"
+            git push
           fi
