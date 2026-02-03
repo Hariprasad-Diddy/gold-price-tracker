@@ -66,10 +66,6 @@ from datetime import datetime
 silver_url = "https://www.grtjewels.com/gifts/gold-coin.html"
 
 response = requests.get(silver_url)
-if response.status_code != 200:
-    print(response.status_code)
-    print(f"FAILED: Status {response.status_code}. Site might be blocking GitHub IPs.")
-    exit(1)
 
 # Prepare data
 now = datetime.now()
