@@ -64,8 +64,17 @@ from datetime import datetime
 
 # Target URL
 silver_url = "https://www.grtjewels.com/gifts/gold-coin.html"
-headers = {'User-Agent': 'Mozilla/5.0'} # Added to prevent blocking
-response = requests.get(silver_url, headers=headers)
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': 'https://www.google.com',
+}
+
+response = requests.get(silver_url, headers=headers, timeout=15)
+if response.status_code != 200:
+    print(f"FAILED: Status {response.status_code}. Site might be blocking GitHub IPs.")
+    exit(1)
 
 # Prepare data
 now = datetime.now()
