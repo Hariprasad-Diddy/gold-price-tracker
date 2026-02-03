@@ -96,6 +96,7 @@ if records:
     df.to_csv(csv_path, mode='a', header=add_header, index=False)
     print(f"DEBUG: File successfully written to {os.path.abspath(csv_path)}")
 else:
+    print(response.text)
     print("DEBUG: No records were found. Check your Regex patterns!")
     exit(1)
 
