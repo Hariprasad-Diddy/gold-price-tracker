@@ -61,6 +61,7 @@ import re
 import os
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # Target URL
 silver_url = "https://www.grtjewels.com/gifts/gold-coin.html"
@@ -98,7 +99,7 @@ def fetch_page(url: str) -> requests.Response:
 response = fetch_page(silver_url)
 
 # Prepare data
-now = datetime.now()
+now = datetime.now(ZoneInfo("Asia/Kolkata"))
 date_str = now.strftime("%Y-%m-%d")
 time_str = now.strftime("%H:%M:%S")
 records = []
