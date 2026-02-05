@@ -60,12 +60,42 @@ import requests
 import re
 import os
 import pandas as pd
-from datetime import datetime 
+from datetime import datetime
 
 # Target URL
 silver_url = "https://www.grtjewels.com/gifts/gold-coin.html"
 
-response = requests.get(silver_url)
+def fetch_page(url: str) -> requests.Response:
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Referer": "https://www.grtjewels.com/",
+        "Connection": "keep-alive",
+    }
+
+    session = requests.Session()
+    response = session.get(url, headers=headers, timeout=20)
+
+    if response.status_code in {403, 503}:
+        try:
+            import cloudscraper  # type: ignore[import-not-found]
+        except ImportError as exc:
+            raise RuntimeError(
+                "Blocked with 403/503. Install cloudscraper to bypass: "
+                "pip install cloudscraper"
+            ) from exc
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(url, headers=headers, timeout=20)
+
+    response.raise_for_status()
+    return response
+
+response = fetch_page(silver_url)
 
 # Prepare data
 now = datetime.now()
@@ -89,9 +119,8 @@ for purity, amount in unique_gold.items():
 
 if records:
     df = pd.DataFrame(records)
-    csv_path = "response.csv" 
-    
-    # Use absolute path relative to the workspace for GitHub
+    csv_path = "response.csv"
+
     add_header = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
     df.to_csv(csv_path, mode='a', header=add_header, index=False)
     print(f"DEBUG: File successfully written to {os.path.abspath(csv_path)}")
@@ -100,5 +129,3 @@ else:
     print(response.text.find("GOLD 22 KT/1g"))
     print("DEBUG: No records were found. Check your Regex patterns!")
     exit(1)
-
-
