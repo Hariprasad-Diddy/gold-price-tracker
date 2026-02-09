@@ -122,8 +122,16 @@ if records:
     df = pd.DataFrame(records)
     csv_path = "response.csv"
 
-    add_header = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
-    df.to_csv(csv_path, mode='a', header=add_header, index=False)
+    # add_header = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
+    # df.to_csv(csv_path, mode='a', header=add_header, index=False)
+    if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
+        existing = pd.read_csv(csv_path)
+        combined = pd.concat([existing, df], ignore_index=True)
+    else:
+        combined = df
+
+    combined = combined.sort_values(["date", "time"], ascending=[False, False])
+    combined.to_csv(csv_path, index=False)
     print(f"DEBUG: File successfully written to {os.path.abspath(csv_path)}")
 else:
     print(response.text)
