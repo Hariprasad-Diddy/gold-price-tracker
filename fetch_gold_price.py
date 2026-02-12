@@ -134,7 +134,10 @@ if records:
     else:
         combined_changes = combined_new
 
+    #combined_changes = combined_changes.sort_values(
+    #    ["date", "time", "article"], ascending=[False, True, False]
+    #)
     combined_changes = combined_changes.sort_values(
-        ["date", "time", "article"], ascending=[False, True, False]
+        ["date", "article"], ascending=[False, False]
     )
     combined_changes.to_csv(changes_path, index=False)
