@@ -87,29 +87,30 @@ if records:
     df["timestamp"] = pd.to_datetime(df["date"] + " " + df["time"])
     df = df.sort_values(["article", "timestamp"])
 
+    # Build change events (old_price -> new_price)
     df["prev_price"] = df.groupby("article")["price"].shift()
-
-    # change events
     changes = df[
         df["prev_price"].notna() & (df["price"] != df["prev_price"])
     ].copy()
-
     changes["old_price"] = changes["prev_price"]
     changes["new_price"] = changes["price"]
     changes = changes[["date", "time", "article", "old_price", "new_price", "timestamp"]]
 
-    # daily start rows from previous day’s last change
+    # Carry forward last change to every day (00:00) until max date in data
+    max_date_all = df["timestamp"].dt.date.max()
     start_rows = []
-    for article, grp in changes.groupby("article", sort=True):
-        grp = grp.sort_values("timestamp")
-        min_date = grp["timestamp"].dt.date.min()
-        max_date = grp["timestamp"].dt.date.max()
 
-        if pd.isna(min_date) or pd.isna(max_date):
+    for article, grp_df in df.groupby("article", sort=True):
+        grp_df = grp_df.sort_values("timestamp")
+        min_date = grp_df["timestamp"].dt.date.min()
+
+        if pd.isna(min_date) or pd.isna(max_date_all):
             continue
 
-        for day in pd.date_range(min_date + pd.Timedelta(days=1), max_date, freq="D").date:
-            prior = grp[grp["timestamp"] < pd.Timestamp(day)]
+        grp_changes = changes[changes["article"] == article].sort_values("timestamp")
+
+        for day in pd.date_range(min_date + pd.Timedelta(days=1), max_date_all, freq="D").date:
+            prior = grp_changes[grp_changes["timestamp"] < pd.Timestamp(day)]
             if not prior.empty:
                 last_change = prior.iloc[-1]
                 start_rows.append({
