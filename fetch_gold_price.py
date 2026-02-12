@@ -79,29 +79,73 @@ else:
     print("DEBUG: No records were found. Check your Regex patterns!")
     exit(1)
 
-changes_path : str = "price_changes.csv"
+changes_path: str = "price_changes.csv"
+
 if records:
     df = pd.read_csv(csv_path)
-    df_sorted_all = df.sort_values(["article","date","time"])
-    df_sorted_all["prev_price"] = df_sorted_all.groupby("article")["price"].shift()
-    price_changes = df_sorted_all[
-        df_sorted_all["prev_price"].notna()
-        & (df_sorted_all["price"] != df_sorted_all["prev_price"])
-    ][["date","time","article","prev_price","price"]].rename(
-        columns={"prev_price":"old_price","price":"new_price"}
-    )
+    df["price"] = pd.to_numeric(df["price"], errors="coerce")
+    df["timestamp"] = pd.to_datetime(df["date"] + " " + df["time"])
+    df = df.sort_values(["article", "timestamp"])
+
+    out_rows = []
+
+    for article, group in df.groupby("article", sort=True):
+        group = group.sort_values("timestamp")
+        group["date_only"] = group["timestamp"].dt.date
+
+        min_date = group["date_only"].min()
+        max_date = group["date_only"].max()
+        if pd.isna(min_date) or pd.isna(max_date):
+            continue
+
+        last_price = None
+
+        for day in pd.date_range(min_date, max_date, freq="D").date:
+            day_rows = group[group["date_only"] == day].sort_values("timestamp")
+
+            if last_price is None:
+                if day_rows.empty:
+                    continue
+                first = day_rows.iloc[0]
+                last_price = first["price"]
+                out_rows.append({
+                    "date": day.isoformat(),
+                    "time": first["timestamp"].strftime("%H:%M:%S"),
+                    "article": article,
+                    "price": last_price,
+                })
+                remaining = day_rows.iloc[1:]
+            else:
+                out_rows.append({
+                    "date": day.isoformat(),
+                    "time": "00:00:00",
+                    "article": article,
+                    "price": last_price,
+                })
+                remaining = day_rows
+
+            for _, row in remaining.iterrows():
+                if row["price"] != last_price:
+                    last_price = row["price"]
+                    out_rows.append({
+                        "date": day.isoformat(),
+                        "time": row["timestamp"].strftime("%H:%M:%S"),
+                        "article": article,
+                        "price": last_price,
+                    })
+
+    daily_changes = pd.DataFrame(out_rows)
 
     if os.path.exists(changes_path) and os.path.getsize(changes_path) > 0:
         existing_changes = pd.read_csv(changes_path)
-        combined_changes = pd.concat([existing_changes,price_changes],ignore_index=True)
+        combined_changes = pd.concat([existing_changes, daily_changes], ignore_index=True)
         combined_changes = combined_changes.drop_duplicates(
-            subset=["date","time","article","old_price","new_price"]
+            subset=["date", "time", "article", "price"]
         )
     else:
-        combined_changes = price_changes
-    combined_changes = combined_changes.sort_values(
-        ["date","time","article"], ascending=[False,False,True]
-    )
-    combined_changes.to_csv(changes_path,index=False)
-    
+        combined_changes = daily_changes
 
+    combined_changes = combined_changes.sort_values(
+        ["date", "time", "article"], ascending=[False, False, True]
+    )
+    combined_changes.to_csv(changes_path, index=False)
