@@ -135,6 +135,6 @@ if records:
         combined_changes = combined_new
 
     combined_changes = combined_changes.sort_values(
-        ["date", "time", "article"], ascending=[False, False, False]
+        ["date", "time", "article"], ascending=[False, True, False]
     )
     combined_changes.to_csv(changes_path, index=False)
