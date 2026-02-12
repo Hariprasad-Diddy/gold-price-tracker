@@ -121,9 +121,7 @@ for purity, amount in unique_gold.items():
 if records:
     df = pd.DataFrame(records)
     csv_path = "response.csv"
-
-    # add_header = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
-    # df.to_csv(csv_path, mode='a', header=add_header, index=False)
+    
     if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
         existing = pd.read_csv(csv_path)
         combined = pd.concat([existing, df], ignore_index=True)
@@ -138,3 +136,30 @@ else:
     print(response.text.find("GOLD 22 KT/1g"))
     print("DEBUG: No records were found. Check your Regex patterns!")
     exit(1)
+
+changes_path : str = "price_changes.csv"
+if records:
+    df = pd.read_csv(csv_path)
+    df_sorted_all = df.sort_values(["article","date","time"])
+    df_sorted_all["prev_price"] = df_sorted_all.groupby("article")["price"].shift()
+    price_changes = df_sorted_all[
+        df_sorted_all["prev_price"].notna()
+        & (df_sorted_all["price"] != df_sorted_all["prev_price"])
+    ][["date","time","article","prev_price","price"]].rename(
+        columns={"prev_price":"old_price","price":"new_price"}
+    )
+
+    if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
+        existing_changes = pd.read_csv(changes_path)
+        combined_changes = pd.concat([existing_changes,price_changes],ignore_index=True)
+        combined_changes = combined_changes.drop_duplicates(
+            subset=["date","time","article","old_price","new_price"]
+        )
+    else:
+        combined_changes = price_changes
+    combined_changes = combined_changes.sort_values(
+        ["date","time","article"], ascending=[False,False,True]
+    )
+    combined_changes.to_csv(changes_path,index=False)
+    
+
