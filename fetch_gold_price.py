@@ -8,7 +8,6 @@ import pandas as pd
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-# added comment
 # Target URL
 silver_url = "https://www.grtjewels.com/gifts/gold-coin.html"
 
