@@ -1,5 +1,5 @@
-import requests
 from datetime import timedelta
+import requests
 import json
 import sys
 import os
