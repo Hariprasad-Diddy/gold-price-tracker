@@ -1,6 +1,7 @@
 import requests
 from datetime import timedelta
-import json,sys
+import json
+import sys
 import os
 import re
 import pandas as pd
