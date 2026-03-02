@@ -2,8 +2,7 @@ from datetime import timedelta
 import requests
 import json
 import sys
-import os
-import re
+import os,re
 import pandas as pd
 from datetime import datetime
 from zoneinfo import ZoneInfo
